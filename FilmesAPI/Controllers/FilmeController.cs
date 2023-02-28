@@ -1,4 +1,5 @@
-﻿using FilmesAPI.Models;
+﻿using FilmesAPI.Data;
+using FilmesAPI.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,20 +10,35 @@ namespace FilmesAPI.Controllers;
 
 public class FilmeController : ControllerBase
 {
+    private FilmeContext _context;
 
-    private static List<Models.Filme> filmes = new List<Filme>();
+    public FilmeController(FilmeContext context)
+    {
+        _context = context;
+    }
+
+    public int Id { get;  set; }
+
     [HttpPost] //post -> postar, adicionar informação
-    public void AdicionaFilme([FromBody]Filme filme) //from body e pra explicitar o corpo da requisição.
+    public IActionResult AdicionaFilme([FromBody]Filme filme) //from body e pra explicitar o corpo da requisição.  IActionResult muda ações na api (404 not found, 201 created etc...)
     {
-        filmes.Add(filme);//adiciona filme
-        Console.WriteLine(filme.Titulo);
-        Console.WriteLine(filme.Duracao);
+        _context.Filmes.Add(filme);
+        _context.SaveChanges();
+        return CreatedAtAction(nameof(RecuperaFilmeId), new { id = filme.Id }, filme);
+        
     }
+
     [HttpGet] //Get -> leitura, pegar
-    public IEnumerable<Filme> RecuperarFilmes() //enumerador
+    public IEnumerable<Filme> RecuperarFilmes([FromQuery] int skip =0,[FromQuery] int take = 50) //enumerador
     {
-        return filmes;
+        return _context.Filmes.Skip(skip).Take(take); //skip pula, take pega
     }
 
-
+    [HttpGet("{id}")]
+    public IActionResult RecuperaFilmeId(int id) // '?' pode ser nulo ou não
+    {
+        var filme = _context.Filmes.FirstOrDefault(Filme => Filme.Id == id);
+        if (filme == null) return NotFound();
+        return Ok(filme);
+    }
 }

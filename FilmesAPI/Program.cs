@@ -1,4 +1,10 @@
+using FilmesAPI.Data;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
+//Conexão com o banco
+var ConnectionString = builder.Configuration.GetConnectionString("FilmeConnection"); 
+builder.Services.AddDbContext<FilmeContext>(opts =>opts.UseMySql(ConnectionString,ServerVersion.AutoDetect(ConnectionString)));
 
 // Add services to the container.
 
